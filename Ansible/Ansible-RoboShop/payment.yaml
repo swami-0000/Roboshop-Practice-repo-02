@@ -1,14 +1,15 @@
-- name: install cart component
-  hosts: cart
+- name: install payment component
+  hosts: payment
   become: 'yes'
   tasks:
-    - name: Setup NodeJS repos
-      ansible.builtin.shell: "curl -sL https://rpm.nodesource.com/setup_lts.x | bash"
-
-    - name: Install NodeJS
-      ansible.builtin.yum:
-        name: nodejs
+    - name: Install Python 3.6
+      ansible.builtin.user:
+        name: '{{item}}'
         state: installed
+      loop:
+        - python36
+        - gcc
+        - python3-devel
 
     - name: check roboshop user exist or not
       ansible.builtin.command: id roboshop
@@ -36,14 +37,14 @@
         path: /app
         state: directory
 
-    - name: download cart artifact
+    - name: download payment artifact
       ansible.builtin.get_url:
-        url: https://roboshop-builds.s3.amazonaws.com/cart.zip
+        url: https://roboshop-builds.s3.amazonaws.com/payment.zip
         dest: /tmp
-
-    - name: extract cart artifact
+        
+    - name: extract payment artifact
       ansible.builtin.unarchive:
-        src: /tmp/cart.zip
+        src: /tmp/payment.zip
         dest: /app
         remote_src: 'yes'
 
@@ -52,17 +53,17 @@
       args:
         chdir: /app
 
-    - name: copy file cart.service
+    - name: copy file payment.service
       ansible.builtin.copy:
-        src: cart.service
-        dest: /etc/systemd/system/cart.service
+        src: payment.service
+        dest: /etc/systemd/system/payment.service
 
     - name: daemon-reload
       ansible.builtin.systemd:
         daemon-reload: true
-
-    - name: Start and enable cart service
+        
+    - name: Start and enable payment service
       ansible.builtin.service:
-        name: cart
+        name: payment
         state: started
         enabled: 'yes'
